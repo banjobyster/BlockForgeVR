@@ -1,0 +1,33 @@
+{
+  "_comment": "Powers this repo's card on banjobyster.github.io. See README.md in this folder. Wrap **words** to accent them.",
+  "schemaVersion": 1,
+
+  "title": "BlockForge VR",
+  "tagline": "A voxel sandbox for Meta Quest 3",
+  "description": "A **WebXR** voxel sandbox playable on **Quest 3** (PCVR over Link) — build block by block, and it also runs flat on desktop.",
+  "highlights": [
+    "Runs in VR on Quest 3 over Link, no install",
+    "Also playable flat in the browser",
+    "Block placement, selection and world editing"
+  ],
+
+  "category": "Game",
+  "tags": ["WebXR", "VR", "JavaScript"],
+  "status": "active",
+  "year": 2026,
+  "role": "Solo (AI-assisted)",
+
+  "demo": "",
+  "repo": null,
+  "video": "",
+  "article": "",
+
+  "cover": "cover.png",
+  "thumbnail": "",
+  "gallery": [],
+
+  "order": 90,
+  "featured": true,
+  "pinned": false,
+  "accent": "rgba(216, 122, 106, 0.9)"
+}
