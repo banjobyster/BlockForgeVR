@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>BlockForge VR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --accent: #6ee86e; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0b0e14; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; color: #e8eef2; }
+  canvas { display: block; }
+
+  #overlay {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 30%, rgba(10,16,28,0.55), rgba(6,8,14,0.88));
+    z-index: 10; transition: opacity .4s;
+  }
+  #overlay.hidden { opacity: 0; pointer-events: none; }
+  #panel {
+    background: rgba(14,19,28,0.92); border: 1px solid #2a3648; border-radius: 16px;
+    padding: 28px 34px; max-width: 720px; width: min(92vw, 720px);
+    box-shadow: 0 24px 80px rgba(0,0,0,.6); max-height: 92vh; overflow: auto;
+  }
+  h1 {
+    margin: 0 0 2px; font-size: 34px; letter-spacing: 1px;
+    font-weight: 800; color: #fff;
+  }
+  h1 .vr { color: var(--accent); }
+  #tagline { margin: 0 0 18px; color: #93a4b8; font-size: 14px; }
+  .btnrow { display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0 8px; }
+  button.big {
+    flex: 1 1 200px; padding: 16px 20px; font-size: 19px; font-weight: 700; cursor: pointer;
+    border-radius: 12px; border: none; transition: transform .06s, filter .15s;
+  }
+  button.big:hover { filter: brightness(1.12); }
+  button.big:active { transform: scale(.98); }
+  #btnVR { background: var(--accent); color: #06220b; }
+  #btnVR:disabled { background: #3a4657; color: #8b97a8; cursor: not-allowed; }
+  #btnDesktop { background: #26344a; color: #dfe8f2; }
+  #vrHint { font-size: 12.5px; color: #7f8ea1; margin: 4px 0 0; }
+  #vrHint b { color: #b8c6d8; }
+
+  .cols { display: flex; gap: 22px; margin-top: 18px; flex-wrap: wrap; }
+  .col { flex: 1 1 260px; }
+  h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); }
+  table.ctrl { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  table.ctrl td { padding: 3px 6px 3px 0; color: #c7d3e0; vertical-align: top; }
+  table.ctrl td:first-child { color: #fff; font-weight: 600; white-space: nowrap; padding-right: 14px; }
+
+  #settings { margin-top: 18px; display: flex; gap: 18px; flex-wrap: wrap; align-items: center; font-size: 13.5px; color: #c7d3e0; }
+  #settings label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  #settings input { accent-color: var(--accent); }
+  #worldrow { margin-top: 14px; display: flex; gap: 10px; align-items: center; font-size: 13px; color: #93a4b8; flex-wrap: wrap; }
+  #worldrow button {
+    padding: 6px 12px; border-radius: 8px; border: 1px solid #3a4a60; background: #1a2333;
+    color: #c7d3e0; cursor: pointer; font-size: 12.5px;
+  }
+  #worldrow button:hover { background: #243149; }
+
+  /* Desktop HUD */
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; display: none; }
+  #crosshair {
+    position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; transform: translate(-50%,-50%);
+    opacity: .85;
+  }
+  #crosshair::before, #crosshair::after {
+    content: ""; position: absolute; background: #fff; mix-blend-mode: difference;
+  }
+  #crosshair::before { left: 8px; top: 0; width: 2px; height: 18px; }
+  #crosshair::after { left: 0; top: 8px; width: 18px; height: 2px; }
+  #blockHud {
+    position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
+    background: rgba(10,14,22,0.72); border: 1px solid #2a3648; border-radius: 10px;
+    padding: 8px 16px; font-size: 15px; font-weight: 600; color: #fff; display: flex; gap: 10px; align-items: center;
+  }
+  #blockHud .swatch { width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(255,255,255,.25); image-rendering: pixelated; }
+  #toast {
+    position: absolute; left: 50%; top: 18%; transform: translateX(-50%);
+    background: rgba(10,14,22,0.8); border-radius: 10px; padding: 8px 18px; font-size: 15px;
+    opacity: 0; transition: opacity .3s; color: #fff;
+  }
+</style>
+</head>
+<body>
+<div id="hud">
+  <div id="crosshair"></div>
+  <div id="blockHud"><canvas class="swatch" id="swatch" width="16" height="16"></canvas><span id="blockName">Grass</span></div>
+  <div id="toast"></div>
+</div>
+
+<div id="overlay">
+  <div id="panel">
+    <h1>BLOCKFORGE <span class="vr">VR</span></h1>
+    <p id="tagline">An infinite voxel sandbox. Mine it, build it, watch the sun set on it.</p>
+
+    <div class="btnrow">
+      <button class="big" id="btnVR" disabled>Checking VR&hellip;</button>
+      <button class="big" id="btnDesktop">Play on Desktop</button>
+    </div>
+    <p id="vrHint">Quest 3 over Link: put the headset on with <b>Link active</b>, then click <b>Enter VR</b> here (or from the headset&rsquo;s view of your desktop).</p>
+
+    <div class="cols">
+      <div class="col">
+        <h3>VR Controls</h3>
+        <table class="ctrl">
+          <tr><td>Left stick</td><td>Move</td></tr>
+          <tr><td>Right stick ←/→</td><td>Snap turn</td></tr>
+          <tr><td>Trigger (hold)</td><td>Mine block (either hand)</td></tr>
+          <tr><td>Grip</td><td>Place block (either hand)</td></tr>
+          <tr><td>A</td><td>Jump / fly up</td></tr>
+          <tr><td>B / Y</td><td>Next / previous block</td></tr>
+          <tr><td>X</td><td>Toggle fly mode</td></tr>
+          <tr><td>Right stick ↓</td><td>Fly down (in fly mode)</td></tr>
+        </table>
+      </div>
+      <div class="col">
+        <h3>Desktop Controls</h3>
+        <table class="ctrl">
+          <tr><td>WASD + mouse</td><td>Move &amp; look (click to lock)</td></tr>
+          <tr><td>Left click (hold)</td><td>Mine block</td></tr>
+          <tr><td>Right click</td><td>Place block</td></tr>
+          <tr><td>Scroll / 1&ndash;9</td><td>Select block</td></tr>
+          <tr><td>Space</td><td>Jump / fly up</td></tr>
+          <tr><td>Shift</td><td>Fly down</td></tr>
+          <tr><td>F</td><td>Toggle fly mode</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div id="settings">
+      <h3 style="width:100%;margin-bottom:2px">Comfort</h3>
+      <label><input type="checkbox" id="optVignette" checked> Movement vignette</label>
+      <label><input type="checkbox" id="optSmoothTurn"> Smooth turn (instead of snap)</label>
+      <label>Render distance
+        <select id="optDist">
+          <option value="4">Short</option>
+          <option value="5" selected>Normal</option>
+          <option value="6">Far</option>
+          <option value="7">Epic</option>
+        </select>
+      </label>
+      <label>Volume
+        <input type="range" id="optVolume" min="0" max="150" value="100" style="width:110px">
+      </label>
+    </div>
+
+    <div id="worldrow">
+      <span id="seedLabel">World seed: &hellip;</span>
+      <button id="btnNewWorld">New world</button>
+      <button id="btnResetWorld">Reset this world</button>
+      <span id="saveNote">Progress auto-saves in this browser.</span>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">{ "imports": { "three": "./three.module.js" } }</script>
+<script type="module" src="./game.js"></script>
+</body>
+</html>
