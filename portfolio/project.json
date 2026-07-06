@@ -4,7 +4,7 @@
 
   "title": "BlockForge VR",
   "tagline": "A voxel sandbox for Meta Quest 3",
-  "description": "A **WebXR** voxel sandbox playable on **Quest 3** (PCVR over Link) — build block by block, and it also runs flat on desktop.",
+  "description": "A **WebXR** voxel sandbox playable on **Quest 3** (PCVR over Link): build block by block, and it also runs flat on desktop.",
   "highlights": [
     "Runs in VR on Quest 3 over Link, no install",
     "Also playable flat in the browser",
@@ -29,5 +29,6 @@
   "order": 90,
   "featured": true,
   "pinned": false,
+  "vibeCoded": true,
   "accent": "rgba(216, 122, 106, 0.9)"
 }
